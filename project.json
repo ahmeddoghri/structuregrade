@@ -1,0 +1,14 @@
+{
+  "tagline": "AlphaFold and PDB confidence and geometry quality gate",
+  "headline": "Coordinates are not confidence.",
+  "summary": "Grade predicted structures by residue confidence, coverage, and physical clashes before downstream use.",
+  "accent": "#80bfff",
+  "topics": "alphafold,protein-structure,bioinformatics,plddt,pdb,quality-control",
+  "sources": [
+    [
+      "AlphaFold confidence guidance",
+      "https://alphafold.ebi.ac.uk/faq"
+    ]
+  ],
+  "name": "structuregrade"
+}
