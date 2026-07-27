@@ -1,20 +1,23 @@
 # structuregrade
 
-**AlphaFold and PDB confidence and geometry quality gate.**
+**A mean pLDDT of 72 sounds fine. Two residues stuck at 30 is the part that actually breaks your downstream pipeline.**
 
 ![structuregrade cover](demo/cover.png)
 
-Grade predicted structures by residue confidence, coverage, and physical clashes before downstream use.
+AlphaFold writes per-residue confidence into the B-factor column, and almost every pipeline collapses it to one mean number before deciding whether to trust the structure. That throws away exactly the information you need: a model can average 72 pLDDT with every residue reasonably confident, or average 72 with a beautifully modeled core and two residues the model was essentially guessing at. Those are not the same structure. structuregrade reads the actual per-residue distribution and reports a grade, a clash count, and the low-confidence tail the mean was hiding.
 
 ![structuregrade workbench](demo/dashboard.png)
 
+## How it works
+
+Parse PDB ATOM/HETATM records, pull pLDDT straight out of the B-factor field per the AlphaFold convention, bucket residues into confidence bands, and flag anything under 50 by name instead of averaging it away. A separate geometry pass checks inter-residue distances for physically impossible clashes, because a locally confident residue can still be placed somewhere it can't actually be.
+
 ## What ships
 
-- A deterministic domain analysis engine with explicit scope
-- JSON API and responsive local browser workbench
-- CLI demo and file-driven analysis
-- Docker image, unit tests, and GitHub Actions matrix
-- No API keys and no uploaded user data
+- PDB ATOM/HETATM parser that reads AlphaFold's pLDDT-in-B-factor convention directly
+- Confidence banding (>=90 / 70-90 / 50-70 / <50) plus a letter grade, not just a raw mean
+- Inter-residue clash detection independent of the confidence score
+- CLI, JSON API, browser workbench, Docker, tests, and CI
 
 ## Run it end to end
 
@@ -32,22 +35,22 @@ Open <http://127.0.0.1:8090>. Analyze your own JSON input with `structuregrade a
 - `GET /api/demo` returns the committed fixture and result.
 - `POST /api/analyze` runs the same engine on a JSON body.
 
-## Current basis
+## The result
 
-- [AlphaFold confidence guidance](https://alphafold.ebi.ac.uk/faq)
-
-## Demo result
-
-The eight-residue fixture averages 71.88 pLDDT but contains two residues below 50. `structuregrade` assigns C instead of letting the mean hide an uninterpretable tail, and reports zero geometry clashes.
+The eight-residue fixture averages 71.88 pLDDT — a number that would sail through most "pLDDT > 70" filters. structuregrade assigns it a C instead, because two of those eight residues are below 50 and the mean was quietly burying them. Zero geometry clashes, for what that's worth on a structure this uninterpretable in places.
 
 ## Scope
 
-The parser reads PDB ATOM/HETATM coordinates and the confidence values AlphaFold writes to the B-factor column. pLDDT is local confidence, not interface or domain-placement confidence; PAE and domain-aware review remain necessary.
+pLDDT is local per-residue confidence, not interface confidence or domain-placement confidence — PAE and domain-aware review still matter for multi-domain structures and complexes. This is a triage gate that catches "the mean is lying to you," not a replacement for structural validation.
 
 ## Test
 
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+## Research basis
+
+- [AlphaFold confidence guidance](https://alphafold.ebi.ac.uk/faq)
 
 MIT licensed.
