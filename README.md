@@ -39,6 +39,31 @@ Open <http://127.0.0.1:8090>. Analyze your own JSON input with `structuregrade a
 
 The eight-residue fixture averages 71.88 pLDDT — a number that would sail through most "pLDDT > 70" filters. structuregrade assigns it a C instead, because two of those eight residues are below 50 and the mean was quietly burying them. Zero geometry clashes, for what that's worth on a structure this uninterpretable in places.
 
+## Update: fixed the clash detector flagging every normal peptide bond
+
+The clash pass compared every pair of atoms from different residues
+against a 1.5 Å threshold, excluding only atom pairs from the *same*
+residue. It never excluded the one bond that legitimately spans a residue
+boundary: the C(i)–N(i+1) peptide bond connecting adjacent residues along
+the backbone, which sits at roughly 1.33 Å — well under the "clash"
+threshold, and completely normal chemistry. On any real, full-atom
+AlphaFold structure (N/CA/C/O plus sidechains per residue, not the
+single-CA-per-residue trace the bundled demo happens to use), every
+adjacent residue pair in the chain would be reported as a clash, silently
+downgrading grades on structurally perfect proteins.
+
+Verified directly: a two-residue backbone built with standard, textbook
+bond geometry (including the ~1.33 Å peptide bond) was flagged with 1
+"clash" and downgraded from what should be an A to a C, despite nothing
+being structurally wrong. Fixed by excluding the canonical C(i)–N(i+1)
+peptide-bond pair between sequentially adjacent residues in the same
+chain from clash counting, while leaving genuine non-bonded steric
+clashes between any other atom pair fully detected.
+`tests/test_peptide_bond_clash.py` covers the original false positive,
+confirms a genuine non-bonded clash between unrelated residues is still
+caught, and confirms the bundled CA-only demo fixture (which never
+exercised this bond in the first place) is unaffected.
+
 ## Scope
 
 pLDDT is local per-residue confidence, not interface confidence or domain-placement confidence — PAE and domain-aware review still matter for multi-domain structures and complexes. This is a triage gate that catches "the mean is lying to you," not a replacement for structural validation.

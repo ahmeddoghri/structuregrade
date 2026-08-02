@@ -31,22 +31,33 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
         if not line.startswith(("ATOM  ", "HETATM")) or len(line) < 66:
             continue
         try:
+            atom_name = line[12:16].strip()
             chain = line[21].strip() or "_"
             residue = int(line[22:26])
             coordinates = tuple(float(line[start:end]) for start, end in ((30, 38), (38, 46), (46, 54)))
             confidence = float(line[60:66])
         except ValueError:
             continue
-        atoms.append((chain, residue, coordinates))
+        atoms.append((chain, residue, atom_name, coordinates))
         residues[(chain, residue)].append(confidence)
     if not residues:
         raise ValueError("input contains no parseable PDB atoms")
     scores = [sum(values) / len(values) for values in residues.values()]
     clashes = 0
-    for index, (chain_a, residue_a, point_a) in enumerate(atoms):
-        for chain_b, residue_b, point_b in atoms[index + 1:]:
+    for index, (chain_a, residue_a, atom_a, point_a) in enumerate(atoms):
+        for chain_b, residue_b, atom_b, point_b in atoms[index + 1:]:
             if (chain_a, residue_a) == (chain_b, residue_b):
                 continue
+            # Skip the canonical backbone peptide bond (C of residue i to N
+            # of residue i+1 in the same chain) -- a normal covalent bond
+            # (~1.33 A) that would otherwise be flagged as a steric clash on
+            # every real multi-atom structure, even though nothing is wrong.
+            if chain_a == chain_b and abs(residue_a - residue_b) == 1:
+                lower, higher = sorted((residue_a, residue_b))
+                lower_atom = atom_a if residue_a == lower else atom_b
+                higher_atom = atom_b if residue_a == lower else atom_a
+                if lower_atom == "C" and higher_atom == "N":
+                    continue
             distance = math.dist(point_a, point_b)
             if distance < 1.5:
                 clashes += 1
