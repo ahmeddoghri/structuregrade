@@ -17,7 +17,7 @@ Parse PDB ATOM/HETATM records, pull pLDDT straight out of the B-factor field per
 - PDB ATOM/HETATM parser that reads AlphaFold's pLDDT-in-B-factor convention directly
 - Confidence banding (>=90 / 70-90 / 50-70 / <50) plus a letter grade, not just a raw mean
 - Inter-residue clash detection independent of the confidence score
-- CLI, JSON API, browser workbench, Docker, tests, and CI
+- CLI, JSON API, browser workbench, Docker, tests
 
 ## Run it end to end
 
