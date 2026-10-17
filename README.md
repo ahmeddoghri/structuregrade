@@ -1,5 +1,7 @@
 # structuregrade
 
+[![tests](https://github.com/ahmeddoghri/structuregrade/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmeddoghri/structuregrade/actions/workflows/tests.yml) [![case study](https://img.shields.io/badge/case%20study-adoghri.com-e0703e)](https://adoghri.com/project-46.html)
+
 **A mean pLDDT of 72 sounds fine. Two residues stuck at 30 is the part that actually breaks your downstream pipeline.**
 
 ![structuregrade cover](demo/cover.png)
