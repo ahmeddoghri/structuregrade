@@ -66,6 +66,23 @@ confirms a genuine non-bonded clash between unrelated residues is still
 caught, and confirms the bundled CA-only demo fixture (which never
 exercised this bond in the first place) is unaffected.
 
+## On real AlphaFold models
+
+The demo fixture has one C-alpha atom per residue, which is exactly why it
+never exercised the peptide-bond bug. Two real, full-atom models from the
+AlphaFold Protein Structure Database now live in `tests/fixtures`
+(CC-BY-4.0):
+
+| model | residues | mean pLDDT | < 50 | clashes before fix | clashes now | grade |
+| --- | ---: | ---: | ---: | ---: | ---: | :---: |
+| hemoglobin alpha (P69905) | 142 | 98.06 | 0 | 141 | **0** | **A** (was C) |
+| p53 (P04637) | 393 | 75.05 | 117 | 392 | **0** | C |
+
+Hemoglobin is a confident, well-folded model and now grades A instead of being
+failed for its own backbone. p53 still grades C, for the right reason this
+time: its transactivation and C-terminal regions are intrinsically disordered
+and pLDDT reports 117 residues below 50.
+
 ## Scope
 
 pLDDT is local per-residue confidence, not interface confidence or domain-placement confidence — PAE and domain-aware review still matter for multi-domain structures and complexes. This is a triage gate that catches "the mean is lying to you," not a replacement for structural validation.
